@@ -26,18 +26,18 @@ Tracely has no accounts, passwords, cookies or analytics.
 
 ## Who can see a location
 
-Every location update is broadcast to **every browser that has the page
-open**, with the rider id. There is no login and no way to limit who sees
-whom. Anyone who can open your copy of Tracely can see the position of everyone
-connected to it.
+Every location update is shared with **every browser that has the page open**,
+together with the rider id. Tracely has no sign-in yet, so anyone who can open
+your copy sees everyone connected to it. Share your copy only with people who
+are happy to see each other's position.
 
 ## Where it is stored
 
 - **Kafka:** each update is a message on the `location-updates` topic. Kafka
   keeps messages according to its retention settings (7 days by default).
 - **MongoDB:** `database-processor.js` saves each update (rider id, latitude,
-  longitude and timestamps). Tracely never deletes these records. You are in
-  control of how long they are kept.
+  longitude and timestamps). The records stay until you delete them, so you
+  decide how long they are kept.
 - **Server memory:** the server does not keep positions in memory. A rider's
   marker disappears from other maps when their connection closes.
 

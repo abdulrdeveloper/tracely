@@ -14,7 +14,7 @@ Please check:
   publicly.
 - Existing [issues](../../issues), in case someone already asked.
 
-## Common problems
+## Quick fixes
 
 - **The server exits with `ECONNREFUSED 127.0.0.1:9092`:** Kafka is not running.
   Start it with `docker compose up -d` and wait a few seconds before starting

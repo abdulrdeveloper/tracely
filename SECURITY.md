@@ -49,8 +49,8 @@ Out of scope:
 - Findings that require a compromised device.
 - Insecure configuration of a deployment, for example a committed `.env` file
   or Kafka exposed to the internet.
-- The known limitations listed in the README: there is no authentication, so
-  every connected browser can see every rider, and there is no rate limiting.
+- Features on the roadmap, such as sign-in and rate limiting. Ideas for them
+  are welcome as feature requests.
 
 ## Good-faith research
 
@@ -58,15 +58,15 @@ If you act in good faith, avoid accessing other people's data, and give us
 reasonable time to fix the issue before disclosure, we will not pursue action
 against you.
 
-## If you run Tracely
+## Recommended setup for your own copy
 
 - The provided `docker-compose.yml` is for local development. It publishes
-  Kafka on port `9092` and runs Kafka UI on port `8080` **without a login**.
-  Do not expose either port to the internet.
+  Kafka on port `9092` and runs Kafka UI on port `8080` without a login. Keep
+  both on your machine or a private network.
 - Keep `.env` out of git. It can contain your MongoDB password.
-- There is no authentication. Do not run Tracely for real users unless you add
-  it, because anyone who opens the page can see everyone's live position.
-- Geolocation in browsers needs HTTPS (or `localhost`). Put a TLS-terminating
+- Tracely has no sign-in yet, so anyone who can open the page sees every
+  rider. Add authentication before you share a copy more widely.
+- Browsers share location only on `localhost` or HTTPS. Put a TLS-terminating
   proxy in front of the server.
 - Keep dependencies up to date.
 

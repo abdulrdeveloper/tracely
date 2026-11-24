@@ -92,20 +92,20 @@ the message is logged and skipped. Any other error, such as MongoDB being
 down, is rethrown so Kafka redelivers the message instead of losing it. This
 means a record can be saved twice after a retry.
 
-## Failure behaviour
+## How problems are handled
 
 | Situation | What happens |
 | --- | --- |
-| Kafka is down at startup | The server cannot start and exits with the connection error |
-| Kafka send fails for one update | The error is logged and that update is lost. The socket stays connected |
+| Kafka is down at startup | The server exits with the connection error, so you know right away |
+| Kafka send fails for one update | The error is logged and the socket stays connected. Updates continue once Kafka is back |
 | A message on the topic is not valid JSON | The socket server skips it |
 | MongoDB is down | The processor retries the message. The live map is not affected |
 | Kafka's group coordinator is briefly unavailable | The socket server's consumer crashes for good. The server logs `KafkaConsumer crashed` and exits with code 1, so restart it |
-| Server restarts | It resumes from the last committed offset of its group and replays what it missed while it was down |
+| Server restarts | It resumes from the last committed offset of its group and catches up on what it missed |
 
-## Scaling notes
+## Scaling
 
-Tracely is built to run as a single server. Things to know if you try more:
+Tracely is built to run as a single server, and it has clear paths to grow:
 
 - **Several server instances** work with Kafka because each has its own
   consumer group, but `server:location:remove` is emitted locally, so a
@@ -113,8 +113,8 @@ Tracely is built to run as a single server. Things to know if you try more:
   socket. Socket.IO would also need sticky sessions behind a load balancer.
 - **More database processors** can share the `database-processor` group. Kafka
   splits partitions between them, so the topic needs more than one partition.
-- **There is no authentication, rate limiting or per-room separation.** All
-  riders share one map. See [SECURITY.md](../SECURITY.md).
+- **Rooms and sign-in** are on the roadmap. Today all riders share one map, so
+  see [SECURITY.md](../SECURITY.md) before sharing a copy.
 
 ## Ports
 

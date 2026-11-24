@@ -60,9 +60,9 @@ for f in index.js database-processor.js kafka-client.js kafka-admin.js models/Lo
 done
 ```
 
-There is no automated test suite yet. Describe in the pull request how you
-tested your change, for example: "opened two windows, moved one, saw the
-marker move in the other, closed it and saw the marker disappear".
+Describe in the pull request how you tested your change, for example: "opened two windows, moved one, saw the
+marker move in the other, closed it and saw the marker disappear". An
+automated test setup would be a very welcome contribution.
 
 ## Commit messages
 

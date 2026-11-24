@@ -47,12 +47,12 @@ example of that pattern.
 - **History:** a separate consumer that saves every update to MongoDB.
 
 It is focused on one thing done clearly: positions in, markers out. Accounts,
-rooms and routing are not included. See [Known limitations](#known-limitations).
+rooms and routing are natural next steps, listed in the [Roadmap](#roadmap).
 
-> Tracely is a learning and open-source project. It is **not deployed**, and it
-> has no authentication, so do not run it for real users as it is.
-> The images below come from a local run with ten fake riders placed around
-> Lahore.
+> Tracely is an open-source project that runs on your own machine in a few
+> minutes. Everyone who opens your copy sees every rider, which is perfect for
+> demos with friends and teammates. The images below come from a local run with
+> ten fake riders placed around Lahore.
 
 ## Screenshots
 
@@ -130,6 +130,21 @@ included in the Docker Compose file.
 The full design, including Kafka settings and failure behaviour, is in
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+## Security first
+
+Location is personal data, so Tracely is set up to keep it in your hands:
+
+- **Your data stays with you.** Locations go to your own Kafka and your own
+  MongoDB. There is no hosted service and no analytics.
+- **Input is checked on the server.** Coordinates that are not numbers or are
+  outside the valid range never reach Kafka.
+- **Secrets stay out of git.** `.env` is ignored, and `.env.example` only has
+  placeholders.
+- **Share it on purpose.** Keep Kafka and Kafka UI on your machine or private
+  network, and add sign-in before you share a copy more widely.
+
+Details are in [SECURITY.md](SECURITY.md) and [PRIVACY.md](PRIVACY.md).
+
 ## Run it yourself
 
 ### You need
@@ -192,22 +207,22 @@ Never commit `.env` files.
 | Kafka and Kafka UI containers | `docker-compose.yml` |
 | Saved fields | `models/Location.js` |
 
-### Deploying
+### Hosting your copy
 
-Tracely is not deployed, and it is not ready for real users. If you want to
-host it anyway, you need:
+Tracely runs anywhere Node.js and Kafka run. For a copy that other people use,
+plan for:
 
 - A host that keeps long-lived connections open. Serverless functions do not
   fit Socket.IO and a Kafka consumer.
-- HTTPS. Browsers only share location on `localhost` or HTTPS.
-- A Kafka broker the server can reach, and a change in `kafka-client.js` to
-  point at it.
-- Authentication in front of the page. Without it everyone sees everyone.
-- Kafka and Kafka UI **not** open to the internet. The provided Compose file is
-  for local development and Kafka UI has no login.
+- HTTPS, because browsers only share location on `localhost` or HTTPS.
+- A Kafka broker the server can reach, with its address set in
+  `kafka-client.js`.
+- Sign-in in front of the page, so riders only see the people they should.
+- Kafka and Kafka UI on a private network. The provided Compose file is made
+  for local development, and Kafka UI has no login.
 
-See [SECURITY.md](SECURITY.md) and [PRIVACY.md](PRIVACY.md) before you share it
-with other people.
+Read [SECURITY.md](SECURITY.md) and [PRIVACY.md](PRIVACY.md) before you invite
+other people.
 
 ## Socket.IO events and HTTP
 
@@ -254,35 +269,42 @@ models/Location.js       Mongoose schema
 public/                  Map UI: index.html, script.js, style.css, logo
 docs/                    Architecture notes and README images
 docker-compose.yml       Kafka (KRaft) and Kafka UI
-.github/                 Issue and pull request templates
 ```
 
 ## Project status
 
-The whole flow (browser, Socket.IO, Kafka, MongoDB and back to other browsers)
-was run end to end locally with ten simultaneous riders. There are no
-automated tests in the repository yet.
+Tracely works end to end: browser, Socket.IO, Kafka, MongoDB and back to every
+other browser. It was run locally with ten riders at once.
 
-### Known limitations
+### Good to know
 
-- **No authentication.** Anyone who opens the page sees every rider.
-- **No rate limiting** on location updates.
-- **Rider ids are socket ids.** A page refresh creates a new rider. The old
-  marker is removed when the old connection closes.
-- **New visitors see others late.** A rider appears on a new visitor's map
-  after that rider's next update, which can take up to 10 seconds.
-- **Restarts replay missed updates.** The socket server resumes from its last
-  committed Kafka offset, so riders can briefly appear at old positions.
-- **A Kafka hiccup stops the server.** If Kafka's group coordinator is briefly
-  unavailable, the server's consumer crashes. The server logs
-  `KafkaConsumer crashed` and exits, so start it again. (Under `pnpm dev` it
-  waits for the next file change.)
-- **Disconnects reach only the server that owned the socket.** Running several
-  server instances needs more work.
-- **Saved locations are never deleted.**
-- **Kafka address and topic name are fixed** in the code.
-- The topic only gets 2 partitions if you run `node kafka-admin.js` before the
-  server. Otherwise Kafka creates it with 1.
+- Run `node kafka-admin.js` before the server so the topic gets 2 partitions.
+  Otherwise Kafka creates it with 1.
+- A rider appears on a new visitor's map after their next update, which is
+  within 10 seconds.
+- After a restart, the server catches up from its last Kafka offset, so riders
+  can briefly show at their previous positions.
+- If Kafka's group coordinator is briefly unavailable, the server logs
+  `KafkaConsumer crashed` and exits. Start it again.
+- Saved locations stay in MongoDB until you delete them.
+- A rider's id is its socket id, so a refresh starts a new rider and
+  the old marker is removed.
+
+## Roadmap
+
+Good places to start contributing:
+
+- **Sign-in and rooms**, so riders only see the people they choose.
+- **Rate limiting** for location updates.
+- **Configuration from `.env`** for the Kafka address and topic name.
+- **Stable rider ids**, so a refresh keeps the same rider.
+- **Instant first view**, sending the current riders to a new visitor on
+  connect.
+- **Automatic cleanup** of old saved locations, for example with a MongoDB TTL
+  index.
+- **Several server instances**, with sticky sessions and removal events
+  through Kafka.
+- **Automated tests.**
 
 ## Contributing
 
