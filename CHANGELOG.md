@@ -24,3 +24,5 @@ First public version.
   the server.
 - Markers are removed from other maps when a rider disconnects.
 - A failed MongoDB write is retried by Kafka instead of being lost.
+- The server exits with an error when its Kafka consumer crashes for good,
+  instead of silently serving a map that never updates.

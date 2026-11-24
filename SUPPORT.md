@@ -25,9 +25,10 @@ Please check:
 - **No marker for my own position:** the browser blocked location access, or
   the page is not on `localhost` or HTTPS. Geolocation does not work on plain
   HTTP from another device. The browser console shows the reason.
-- **Markers stop moving after Kafka restarted:** the server's Kafka consumer
-  can stop when Kafka's group coordinator is briefly unavailable. Restart the
-  server.
+- **The server exited with `KafkaConsumer crashed`:** Kafka's group
+  coordinator was briefly unavailable. Check that Kafka is healthy
+  (`docker ps`), then start the server again. After an exit, `pnpm dev` waits
+  for a file change, so save any file or press Ctrl+C and run it again.
 - **`database-processor` exits with "Missing MONGO_URI":** set `MONGO_URI` in
   `.env`. The live map does not need MongoDB.
 - **`EADDRINUSE`:** port 8000 is taken. Set `PORT` in `.env`.

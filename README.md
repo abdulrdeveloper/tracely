@@ -273,9 +273,10 @@ automated tests in the repository yet.
   after that rider's next update, which can take up to 10 seconds.
 - **Restarts replay missed updates.** The socket server resumes from its last
   committed Kafka offset, so riders can briefly appear at old positions.
-- **A Kafka hiccup can stop the live map.** If Kafka's group coordinator is
-  briefly unavailable, the server's consumer can crash and the map stops
-  updating until the server is restarted.
+- **A Kafka hiccup stops the server.** If Kafka's group coordinator is briefly
+  unavailable, the server's consumer crashes. The server logs
+  `KafkaConsumer crashed` and exits, so start it again. (Under `pnpm dev` it
+  waits for the next file change.)
 - **Disconnects reach only the server that owned the socket.** Running several
   server instances needs more work.
 - **Saved locations are never deleted.**

@@ -100,7 +100,7 @@ means a record can be saved twice after a retry.
 | Kafka send fails for one update | The error is logged and that update is lost. The socket stays connected |
 | A message on the topic is not valid JSON | The socket server skips it |
 | MongoDB is down | The processor retries the message. The live map is not affected |
-| Kafka's group coordinator is briefly unavailable | The socket server's consumer can crash and the map stops updating until the server is restarted |
+| Kafka's group coordinator is briefly unavailable | The socket server's consumer crashes for good. The server logs `KafkaConsumer crashed` and exits with code 1, so restart it |
 | Server restarts | It resumes from the last committed offset of its group and replays what it missed while it was down |
 
 ## Scaling notes
