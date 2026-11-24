@@ -1,163 +1,306 @@
-# 📍 Tracely
+<p align="center">
+  <img src="public/logo.svg" alt="Tracely" height="120" />
+</p>
 
-Real-time live location tracking on a map, built with **Socket.IO**, **Apache Kafka** and **MongoDB**.
+<h3 align="center">Real-time live location tracking on a map, built on Socket.IO, Apache Kafka and MongoDB.</h3>
 
-![Node.js](https://img.shields.io/badge/Node.js-5FA04E?logo=nodedotjs&logoColor=white)
-![Express](https://img.shields.io/badge/Express_5-000000?logo=express&logoColor=white)
-![Socket.IO](https://img.shields.io/badge/Socket.IO-010101?logo=socketdotio&logoColor=white)
-![Apache Kafka](https://img.shields.io/badge/Apache_Kafka-231F20?logo=apachekafka&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white)
-![Leaflet](https://img.shields.io/badge/Leaflet-199900?logo=leaflet&logoColor=white)
+<p align="center">
+  Open Tracely, allow location access, and you appear on a shared map. Everyone else who has the page open shows up as a marker and moves in real time. Every update travels through a Kafka topic, so the live map and the database are fed by independent consumers.
+</p>
 
-Open Tracely in a browser, allow location access, and you appear on a shared map. Everyone else who has the page open shows up as a marker and moves in real time. Every location update travels through a Kafka topic, so the live map and the database are fed by independent consumers.
+<p align="center">
+  <a href="#run-it-yourself"><strong>Run it</strong></a>
+  ·
+  <a href="#screenshots">Screenshots</a>
+  ·
+  <a href="docs/ARCHITECTURE.md">Architecture</a>
+  ·
+  <a href="https://github.com/abdulrdeveloper/tracely/issues">Report a bug</a>
+</p>
 
-> Tracely is a learning / open-source project and is **not deployed**. All screenshots below are from a local run.
+<p align="center">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
+  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-24-5FA04E.svg" />
+  <img alt="Express 5" src="https://img.shields.io/badge/Express-5-black.svg" />
+  <img alt="Socket.IO 4" src="https://img.shields.io/badge/Socket.IO-4-010101.svg" />
+  <img alt="Apache Kafka" src="https://img.shields.io/badge/Apache%20Kafka-4.2-231F20.svg" />
+  <img alt="MongoDB" src="https://img.shields.io/badge/MongoDB-Mongoose-47A248.svg" />
+  <a href="CONTRIBUTING.md"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" /></a>
+</p>
+
+<p align="center">
+  <img src="docs/images/hero.jpg" alt="Tracely: live map of riders on a desktop browser and a phone" />
+</p>
+
+---
+
+## What is Tracely?
+
+Live location features (delivery tracking, ride sharing, "where is my friend")
+all follow the same pattern: many devices send positions, many screens show
+them, and you probably want to keep a history. Tracely is a small, readable
+example of that pattern.
+
+- **Browser:** plain HTML and JavaScript with Leaflet and OpenStreetMap tiles.
+- **Server:** Node.js, Express 5 and Socket.IO.
+- **Pipeline:** a Kafka topic between the socket server and everything else.
+- **History:** a separate consumer that saves every update to MongoDB.
+
+It is focused on one thing done clearly: positions in, markers out. Accounts,
+rooms and routing are not included. See [Known limitations](#known-limitations).
+
+> Tracely is a learning and open-source project. It is **not deployed**, and it
+> has no authentication, so do not run it for real users as it is.
+> The images below come from a local run with ten fake riders placed around
+> Lahore.
 
 ## Screenshots
 
-**Live map**: four other riders and the viewer around Minar-e-Pakistan, Lahore. Clicking a marker shows the rider id.
+### Live map
 
-![Tracely live map on desktop](docs/screenshots/map-desktop.png)
+Every connected rider is a marker. Markers move as updates arrive and
+disappear when a rider leaves.
 
-**Kafka UI**: every location update is a message on the `location-updates` topic, keyed by the rider's socket id.
+![Live map with ten riders across the city](docs/images/live-map.jpg)
 
-![Kafka UI showing messages on the location-updates topic](docs/screenshots/kafka-ui-topic.png)
+### Street level
 
-**Mobile browser**
+Click a marker to see the rider id.
 
-<p align="center">
-  <img src="docs/screenshots/map-mobile.png" alt="Tracely live map on a phone-sized screen" width="280">
-</p>
+![Street level view with a rider popup](docs/images/street-view.jpg)
+
+### On a phone
+
+![The map on two phone-sized screens](docs/images/mobile.jpg)
+
+### Kafka
+
+Every update is a message on the `location-updates` topic, keyed by the
+rider's socket id. This is [Kafka UI](https://github.com/provectus/kafka-ui),
+included in the Docker Compose file.
+
+![Kafka UI showing messages on the location-updates topic](docs/images/kafka-messages.jpg)
+
+### Server logs
+
+![Terminal output of the socket server receiving updates from Kafka](docs/images/terminal-server.jpg)
 
 ## Features
 
-- Live map with one marker per connected rider (Leaflet + OpenStreetMap tiles)
-- Your own position is sent every 10 seconds, and shown straight away on page load
-- Markers move in real time and disappear when a rider disconnects
-- Kafka sits between the socket server and everything else, so the map and the database are decoupled
-- Locations are saved to MongoDB by a separate processor, so history is stored even if no one is watching the map
-- Invalid coordinates are rejected before they reach Kafka
-- `/health` endpoint for a quick status check
+### Live map
+- One marker per connected rider, with the rider id in a popup.
+- Your own marker says "You are here". The map centres on you and follows you
+  as you move.
+- Your position is sent as soon as the page loads, then every 10 seconds.
+- A rider's marker is removed from every map when they disconnect.
+- Works on phones and tablets (the map fills the screen).
+
+### Kafka pipeline
+- Updates are published to a Kafka topic with the socket id as the key, so
+  each rider's updates stay in order.
+- The socket server and the database processor are separate consumer groups,
+  so either can be slow or stopped without affecting the other.
+- Kafka and Kafka UI start with one `docker compose up -d`.
+
+### Saved history
+- `database-processor.js` writes every update to MongoDB with Mongoose.
+- If MongoDB is down, Kafka redelivers the message instead of losing it.
+- Bad data (invalid JSON or a validation error) is logged and skipped.
+
+### Careful by default
+- The server rejects coordinates that are not numbers or are outside the valid
+  range before they reach Kafka.
+- Errors from Kafka are logged and do not crash the server.
+- `GET /health` for a quick status check.
 
 ## How it works
 
-```mermaid
-flowchart LR
-    A["Browser<br/>Leaflet + Geolocation API"] -- "client:location:update" --> B["Express + Socket.IO<br/>index.js"]
-    B -- "produce (key = socket id)" --> C[("Kafka topic<br/>location-updates")]
-    C -- "group socket-server-PORT" --> B
-    B -- "server:location:update" --> D["All connected browsers"]
-    C -- "group database-processor" --> E["database-processor.js"]
-    E --> F[("MongoDB")]
-```
+![Tracely architecture: browsers, socket server, Kafka, database processor and MongoDB](docs/images/architecture.jpg)
 
-1. The browser reads its position with the Geolocation API and emits `client:location:update` over Socket.IO.
-2. The server validates the coordinates and publishes them to the Kafka topic `location-updates` (2 partitions, keyed by socket id so one rider's updates stay in order).
-3. Two consumers read the topic independently:
-   - the **socket server** broadcasts each update to all browsers, and
-   - the **database processor** stores it in MongoDB.
-4. When a socket disconnects, the server tells every browser to remove that rider's marker.
+1. **Send:** the browser reads its position and emits `client:location:update`.
+2. **Publish:** the server validates it and publishes it to the Kafka topic
+   `location-updates`.
+3. **Broadcast:** the server's own consumer reads the topic and emits
+   `server:location:update` to every browser.
+4. **Save:** the database processor reads the same topic and stores each update
+   in MongoDB.
+5. **Leave:** when a socket disconnects, the server emits
+   `server:location:remove` and every browser removes that marker.
 
-### Socket.IO events
+The full design, including Kafka settings and failure behaviour, is in
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-| Event | Direction | Payload |
-| --- | --- | --- |
-| `client:location:update` | browser → server | `{ latitude, longitude }` |
-| `server:location:update` | server → browsers | `{ id, latitude, longitude }` |
-| `server:location:remove` | server → browsers | `id` (the rider that left) |
+## Run it yourself
 
-## Tech stack
+### You need
 
-| Part | Technology |
-| --- | --- |
-| Server | Node.js, Express 5, Socket.IO 4 |
-| Messaging | Apache Kafka 4.2 (KRaft, single broker) via `kafkajs` |
-| Database | MongoDB via Mongoose |
-| Frontend | Plain HTML/CSS/JS, Leaflet 1.9, OpenStreetMap tiles |
-| Tooling | pnpm, Docker Compose, Kafka UI |
+- **Node.js 24** and **pnpm 11** (`corepack enable` sets up pnpm)
+- **Docker** with Docker Compose, for Kafka and Kafka UI
+- A **MongoDB** database, only if you want to save history. A free
+  [Atlas](https://www.mongodb.com/cloud/atlas/register) cluster or a local
+  `mongodb://127.0.0.1:27017/tracely` works. The live map does not need it.
 
-## Getting started
-
-### Prerequisites
-
-- Node.js (developed and tested on v24)
-- [pnpm](https://pnpm.io/)
-- [Docker](https://www.docker.com/) with Docker Compose
-- A MongoDB database, only needed for saving history (a free [MongoDB Atlas](https://www.mongodb.com/atlas) cluster works). The live map works without it.
-
-### 1. Install and configure
+### Quick start
 
 ```bash
 git clone https://github.com/abdulrdeveloper/tracely.git
 cd tracely
 pnpm install
 cp .env.example .env
+
+docker compose up -d      # Kafka on :9092 and Kafka UI on :8080
+node kafka-admin.js       # creates the location-updates topic (2 partitions)
+pnpm dev                  # map and socket server on http://localhost:8000
 ```
 
-Open `.env` and set `MONGO_URI` if you want to save locations.
+Open **http://localhost:8000** and allow location access.
 
-### 2. Start Kafka
+To save history, set `MONGO_URI` in `.env` and run this in a second terminal:
 
 ```bash
-docker compose up -d
-node kafka-admin.js      # creates the location-updates topic (2 partitions)
+pnpm dev:db
 ```
 
-Kafka listens on `localhost:9092`, and Kafka UI is available at <http://localhost:8080>.
+### Try it with more than one rider
 
-### 3. Run the app
+Every browser tab is its own rider. Open the page in two or three windows. To
+fake different places, use Chrome DevTools: **More tools → Sensors →
+Location**. Each window shows up on the others within 10 seconds.
 
-```bash
-pnpm dev                 # web + socket server on http://localhost:8000
-pnpm dev:db              # optional: saves locations to MongoDB (needs MONGO_URI)
-```
+### Configuration
 
-Open <http://localhost:8000> and allow location access.
+Set these in `.env` (see `.env.example`):
 
-### Trying it with more than one rider
-
-Every browser tab is its own rider, so open the page in two or three windows. To fake different positions, use Chrome DevTools: **More tools → Sensors → Location**, then pick a city or enter coordinates. Each window sends its position within 10 seconds.
-
-## Environment variables
-
-| Variable | Default | Description |
+| Variable | Required | What it is |
 | --- | --- | --- |
-| `PORT` | `8000` | Port of the web and socket server |
-| `NODE_ENV` | none | Shown in the startup log |
-| `MONGO_URI` | none | MongoDB connection string, required only by `database-processor.js` |
+| `PORT` | No | Port of the web and socket server, default `8000` |
+| `NODE_ENV` | No | Shown in the startup log |
+| `MONGO_URI` | Only for `database-processor.js` | MongoDB connection string |
 
-## Scripts
+Never commit `.env` files.
+
+### Make it yours
+
+| What | Where |
+| --- | --- |
+| How often a position is sent (10 seconds) | `main()` in `public/script.js` |
+| Default map view and tile source | Top of `public/script.js` |
+| Geolocation accuracy and timeout | `getUsersCurrentLocation()` in `public/script.js` |
+| Marker popups | `public/script.js` |
+| Kafka address (`localhost:9092`) | `kafka-client.js` |
+| Topic name and partition count | `kafka-admin.js`, plus the topic name in `index.js` and `database-processor.js` |
+| Kafka and Kafka UI containers | `docker-compose.yml` |
+| Saved fields | `models/Location.js` |
+
+### Deploying
+
+Tracely is not deployed, and it is not ready for real users. If you want to
+host it anyway, you need:
+
+- A host that keeps long-lived connections open. Serverless functions do not
+  fit Socket.IO and a Kafka consumer.
+- HTTPS. Browsers only share location on `localhost` or HTTPS.
+- A Kafka broker the server can reach, and a change in `kafka-client.js` to
+  point at it.
+- Authentication in front of the page. Without it everyone sees everyone.
+- Kafka and Kafka UI **not** open to the internet. The provided Compose file is
+  for local development and Kafka UI has no login.
+
+See [SECURITY.md](SECURITY.md) and [PRIVACY.md](PRIVACY.md) before you share it
+with other people.
+
+## Socket.IO events and HTTP
+
+| Event | Direction | Payload |
+| --- | --- | --- |
+| `client:location:update` | browser → server | `{ latitude, longitude }` |
+| `server:location:update` | server → browsers | `{ id, latitude, longitude }` |
+| `server:location:remove` | server → browsers | `id` of the rider that left |
+
+| Method | Route | What it does |
+| --- | --- | --- |
+| `GET` | `/health` | Returns `{ "healthy": true, ... }` for status checks |
+| `GET` | `/` | Serves the map from `public/` |
+
+## Tech stack
+
+| Area | Tools |
+| --- | --- |
+| Server | Node.js, Express 5, Socket.IO 4 |
+| Messaging | Apache Kafka 4.2 (KRaft, single broker) with `kafkajs` |
+| Database | MongoDB with Mongoose |
+| Frontend | HTML, CSS and JavaScript, Leaflet 1.9, OpenStreetMap tiles |
+| Tooling | pnpm, Docker Compose, Kafka UI |
+
+## Useful commands
 
 | Command | What it does |
 | --- | --- |
-| `pnpm dev` | Starts the server with file watching |
-| `pnpm dev:db` | Starts the database processor with file watching |
-| `pnpm start` | Starts the server |
-| `pnpm processor` | Starts the database processor |
+| `pnpm dev` | Start the server and restart it when files change |
+| `pnpm dev:db` | Start the database processor with file watching |
+| `pnpm start` | Start the server |
+| `pnpm processor` | Start the database processor |
+| `node kafka-admin.js` | Create the `location-updates` topic |
+| `docker compose up -d` / `down` | Start or stop Kafka and Kafka UI |
 
-## Project structure
+## Project layout
 
 ```text
-Tracely/
-├── index.js                # Express + Socket.IO server, Kafka producer and consumer
-├── database-processor.js   # Kafka consumer that saves locations to MongoDB
-├── kafka-client.js         # Shared Kafka client config
-├── kafka-admin.js          # Creates the location-updates topic
-├── models/Location.js      # Mongoose schema
-├── public/                 # Map UI (index.html, script.js, style.css)
-├── docs/screenshots/       # Images used in this README
-├── docker-compose.yml      # Kafka (KRaft) + Kafka UI
-└── .env.example
+index.js                 Express + Socket.IO server, Kafka producer and consumer
+database-processor.js    Kafka consumer that saves updates to MongoDB
+kafka-client.js          Shared Kafka client config
+kafka-admin.js           Creates the location-updates topic
+models/Location.js       Mongoose schema
+public/                  Map UI: index.html, script.js, style.css, logo
+docs/                    Architecture notes and README images
+docker-compose.yml       Kafka (KRaft) and Kafka UI
+.github/                 Issue and pull request templates
 ```
 
-## Known limitations
+## Project status
 
-- No authentication: anyone who opens the page can see every connected rider's live position. Do not run it publicly with real users.
-- Rider ids are Socket.IO ids, so a page refresh creates a new rider.
-- A new visitor sees other riders after their next update (up to 10 seconds).
-- Stored locations are never deleted.
-- The Kafka broker address is fixed to `localhost:9092`.
+The whole flow (browser, Socket.IO, Kafka, MongoDB and back to other browsers)
+was run end to end locally with ten simultaneous riders. There are no
+automated tests in the repository yet.
+
+### Known limitations
+
+- **No authentication.** Anyone who opens the page sees every rider.
+- **No rate limiting** on location updates.
+- **Rider ids are socket ids.** A page refresh creates a new rider. The old
+  marker is removed when the old connection closes.
+- **New visitors see others late.** A rider appears on a new visitor's map
+  after that rider's next update, which can take up to 10 seconds.
+- **Restarts replay missed updates.** The socket server resumes from its last
+  committed Kafka offset, so riders can briefly appear at old positions.
+- **A Kafka hiccup can stop the live map.** If Kafka's group coordinator is
+  briefly unavailable, the server's consumer can crash and the map stops
+  updating until the server is restarted.
+- **Disconnects reach only the server that owned the socket.** Running several
+  server instances needs more work.
+- **Saved locations are never deleted.**
+- **Kafka address and topic name are fixed** in the code.
+- The topic only gets 2 partitions if you run `node kafka-admin.js` before the
+  server. Otherwise Kafka creates it with 1.
+
+## Contributing
+
+Contributions are welcome, from typo fixes to new features. Please read
+[CONTRIBUTING.md](CONTRIBUTING.md) and follow our
+[Code of Conduct](CODE_OF_CONDUCT.md). Every change goes through a pull request.
+
+Need help? See [SUPPORT.md](SUPPORT.md). Changes are listed in
+[CHANGELOG.md](CHANGELOG.md).
+
+## Security
+
+Found a vulnerability? Please report it privately as described in
+[SECURITY.md](SECURITY.md) instead of opening a public issue.
+
+## Policies
+
+- [Privacy Policy](PRIVACY.md)
 
 ## License
 
-[MIT](LICENSE)
+Released under the [MIT License](LICENSE). Copyright (c) 2026 Abdul Rahman.
