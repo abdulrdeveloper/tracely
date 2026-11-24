@@ -28,6 +28,14 @@ async function main() {
         fromBeginning: false,
     });
 
+    // kafkajs stops the consumer for good on some errors (restart is false), for
+    // example when Kafka's group coordinator is unavailable. Exit loudly instead
+    // of leaving a server that accepts sockets but never updates the map.
+    kafkaConsumer.on(kafkaConsumer.events.CRASH, ({ payload }) => {
+        console.error("KafkaConsumer crashed:", payload.error.message);
+        if (!payload.restart) process.exit(1);
+    });
+
     await kafkaConsumer.run({
         eachMessage: async ({ message, heartbeat }) => {
             let data;
