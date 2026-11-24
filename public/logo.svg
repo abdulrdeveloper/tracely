@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="70 85 370 370" width="100%" height="100%">
+  <defs>
+    <!-- Background Glow Filter -->
+    <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="10" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="soft-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#021c1e" flood-opacity="0.35"/>
+    </filter>
+
+    <!-- Main Dynamic Gradient -->
+    <linearGradient id="tracely-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="30%" stop-color="#22c55e"/>
+      <stop offset="60%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+
+    <!-- Wing Gradients -->
+    <linearGradient id="left-wing" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#86efac"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+
+    <linearGradient id="right-wing" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+
+    <linearGradient id="track-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#dcfce7" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#cffafe" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#dbeafe" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#soft-shadow)">
+    <!-- Outer Glow Underlayer -->
+    <g opacity="0.35" filter="url(#neon-glow)">
+      <!-- Left loop glow -->
+      <path d="M 175 160 C 110 160 80 215 80 270 C 80 340 145 375 220 375 C 290 375 330 330 375 250 C 405 195 440 210 440 260 C 440 315 390 370 330 370" 
+            fill="none" stroke="url(#tracely-gradient)" stroke-width="36" stroke-linecap="round"/>
+      <!-- Pin tip glow -->
+      <path d="M 256 125 C 190 125 180 220 220 300 L 256 395 L 292 300 C 330 220 320 125 256 125 Z" 
+            fill="url(#tracely-gradient)"/>
+    </g>
+
+    <!-- Base Geometry: Left Arc -->
+    <path d="M 185 165 C 125 165 95 215 95 270 C 95 330 145 365 210 365 C 265 365 315 320 355 255"
+          fill="none" stroke="url(#left-wing)" stroke-width="28" stroke-linecap="round"/>
+
+    <!-- Base Geometry: Right Arc -->
+    <path d="M 330 365 C 385 365 425 325 425 270 C 425 215 385 175 335 175"
+          fill="none" stroke="url(#right-wing)" stroke-width="26" stroke-linecap="round"/>
+
+    <!-- Center GPS Pin Loop (Core) -->
+    <path d="M 256 115 
+             C 195 115 175 185 195 255 
+             C 210 305 238 350 256 385 
+             C 274 350 302 305 317 255 
+             C 337 185 317 115 256 115 Z"
+          fill="url(#tracely-gradient)"/>
+
+    <!-- Inner Hollow (Donut Hole / Map Pin Eye) -->
+    <circle cx="256" cy="205" r="42" fill="#0f172a" opacity="0.95"/>
+    <circle cx="256" cy="205" r="28" fill="url(#track-glow)" opacity="0.2"/>
+
+    <!-- Circuit Track lines (Live Stream & Kafka connectivity feel) -->
+    <!-- Left circuit line -->
+    <path d="M 180 180 C 135 180 115 220 115 268 C 115 315 155 345 205 345"
+          fill="none" stroke="url(#track-glow)" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+    <circle cx="180" cy="180" r="5.5" fill="#ffffff" filter="url(#neon-glow)"/>
+    <circle cx="140" cy="335" r="4.5" fill="#a7f3d0"/>
+
+    <!-- Right circuit line -->
+    <path d="M 350 348 C 390 348 408 315 408 270 C 408 230 380 195 345 195"
+          fill="none" stroke="url(#track-glow)" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+    <circle cx="345" cy="195" r="5.5" fill="#ffffff" filter="url(#neon-glow)"/>
+    <circle cx="385" cy="335" r="4.5" fill="#93c5fd"/>
+
+    <!-- Center Pin Core circuit line -->
+    <path d="M 256 135 C 215 135 205 180 215 235 C 225 285 245 330 256 360"
+          fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.75"/>
+    <circle cx="256" cy="135" r="4" fill="#ffffff"/>
+
+    <!-- Target Pulse Ring at Pin Tip -->
+    <polygon points="256,415 242,380 270,380" fill="#06b6d4"/>
+    <circle cx="256" cy="415" r="5" fill="#38bdf8" filter="url(#neon-glow)"/>
+  </g>
+</svg>
