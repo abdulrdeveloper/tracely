@@ -52,7 +52,7 @@ rooms and routing are natural next steps, listed in the [Roadmap](#roadmap).
 > Tracely is an open-source project that runs on your own machine in a few
 > minutes. Everyone who opens your copy sees every rider, which is perfect for
 > demos with friends and teammates. The images below come from a local run with
-> ten fake riders placed around Lahore.
+> ten  riders placed around Lahore.
 
 ## Screenshots
 
@@ -179,7 +179,7 @@ pnpm dev:db
 ### Try it with more than one rider
 
 Every browser tab is its own rider. Open the page in two or three windows. To
-fake different places, use Chrome DevTools: **More tools → Sensors →
+ different places, use Chrome DevTools: **More tools → Sensors →
 Location**. Each window shows up on the others within 10 seconds.
 
 ### Configuration
